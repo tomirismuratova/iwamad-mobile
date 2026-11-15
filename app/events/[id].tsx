@@ -1,12 +1,58 @@
-import { View, Text, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Pressable,
+} from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 
-import { events } from '../../src/data/events';
+import { useEvents } from '../../src/hooks/useEvents';
 
 export default function EventDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const event = events.find((item) => item.id === Number(id));
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useEvents();
+
+  if (isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text>Loading events</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorTitle}>
+          Could not load events
+        </Text>
+
+        <Text style={styles.errorMessage}>
+          {error.message}
+        </Text>
+
+        <Pressable
+          onPress={() => refetch()}
+          style={styles.retryButton}
+        >
+          <Text style={styles.retryButtonText}>
+            Try again
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const event = data.find((item) => item.id === Number(id));
 
   if (!event) {
     return (
@@ -37,6 +83,13 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#FFFFFF',
   },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    gap: 12,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -46,5 +99,27 @@ const styles = StyleSheet.create({
   detail: {
     fontSize: 18,
     marginBottom: 12,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  retryButton: {
+    minHeight: 44,
+    minWidth: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

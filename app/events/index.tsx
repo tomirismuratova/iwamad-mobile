@@ -5,19 +5,26 @@ import {
   FlatList,
   TextInput,
   StyleSheet,
+  ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
 
-import { events } from '../../src/data/events';
 import EventRow from '../../src/components/EventRow';
+import { useEvents } from '../../src/hooks/useEvents';
 
 export default function EventsScreen() {
   const [savedIds, setSavedIds] = useState<number[]>([]);
   const [searchText, setSearchText] = useState('');
 
-  const filteredEvents = events.filter((event) =>
-    event.title.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useEvents();
 
   const toggleSaved = (id: number) => {
     setSavedIds((ids) =>
@@ -26,6 +33,42 @@ export default function EventsScreen() {
         : [...ids, id]
     );
   };
+
+  if (isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text>Loading events</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorTitle}>
+          Could not load events
+        </Text>
+
+        <Text style={styles.errorMessage}>
+          {error.message}
+        </Text>
+
+        <Pressable
+          onPress={() => refetch()}
+          style={styles.retryButton}
+        >
+          <Text style={styles.retryButtonText}>
+            Try again
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const filteredEvents = (data ?? []).filter((event) =>
+    event.title.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
@@ -54,6 +97,8 @@ export default function EventsScreen() {
         ListEmptyComponent={
           <Text style={styles.empty}>No events match.</Text>
         }
+        refreshing={isRefetching}
+        onRefresh={() => refetch()}
       />
     </View>
   );
@@ -64,6 +109,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
     padding: 16,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    gap: 12,
   },
   info: {
     fontSize: 14,
@@ -85,5 +137,27 @@ const styles = StyleSheet.create({
     marginTop: 30,
     fontSize: 16,
     color: '#666666',
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  retryButton: {
+    minHeight: 44,
+    minWidth: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
