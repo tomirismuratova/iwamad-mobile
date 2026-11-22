@@ -1,39 +1,75 @@
 import { Text, Pressable, StyleSheet } from 'react-native';
 import type { CampusEvent } from '../data/events';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  LinearTransition,
+  ZoomIn,
+} from 'react-native-reanimated';
 
 type EventRowProps = {
   event: CampusEvent;
   onPress: () => void;
-  onLongPress: () => void;
+  onToggleSaved: () => void;
   isSaved: boolean;
 };
 
 export default function EventRow({
   event,
   onPress,
-  onLongPress,
+  onToggleSaved,
   isSaved,
 }: EventRowProps) {
   return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      delayLongPress={500}
-      style={({ pressed }) => [
-        styles.card,
-        pressed && styles.cardPressed,
-      ]}
+    <Animated.View
+      entering={FadeIn}
+      exiting={FadeOut}
+      layout={LinearTransition}
     >
-      <Text style={styles.title}>{event.title}</Text>
+      <Swipeable
+        friction={2}
+        rightThreshold={60}
+        renderRightActions={(_progress, _translation, swipeable) => (
+          <Pressable
+            onPress={() => {
+              onToggleSaved();
+              swipeable.close();
+            }}
+            style={styles.action}
+          >
+            <Text style={styles.actionText}>
+              {isSaved ? 'Unsave' : 'Save'}
+            </Text>
+          </Pressable>
+        )}
+      >
+        <Pressable
+          onPress={onPress}
+          onLongPress={onToggleSaved}
+          delayLongPress={500}
+          style={({ pressed }) => [
+            styles.card,
+            pressed && styles.cardPressed,
+          ]}
+        >
+          <Text style={styles.title}>{event.title}</Text>
 
-      <Text style={styles.details}>
-        {event.date} · {event.place}
-      </Text>
+          <Text style={styles.details}>
+            {event.date} · {event.place}
+          </Text>
 
-      {isSaved && (
-        <Text style={styles.saved}>★ Saved</Text>
-      )}
-    </Pressable>
+          {isSaved && (
+            <Animated.Text
+              entering={ZoomIn}
+              style={styles.saved}
+            >
+              ★ Saved
+            </Animated.Text>
+          )}
+        </Pressable>
+      </Swipeable>
+    </Animated.View>
   );
 }
 
@@ -68,5 +104,18 @@ const styles = StyleSheet.create({
     color: '#D18B00',
     marginTop: 8,
   },
+  action: {
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 44,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  actionText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });
-
