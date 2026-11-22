@@ -8,6 +8,7 @@ import {
 import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { useEvents } from '../../src/hooks/useEvents';
+import HolidayNote from '../../src/components/HolidayNote';
 
 export default function EventDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -69,6 +70,9 @@ export default function EventDetailsScreen() {
 
       <Text style={styles.title}>{event.title}</Text>
       <Text style={styles.detail}>Date: {event.date}</Text>
+
+      <HolidayNote date={event.date} />
+
       <Text style={styles.detail}>Place: {event.place}</Text>
       <Text style={styles.detail}>Seats: {event.seats}</Text>
     </View>
